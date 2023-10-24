@@ -19,7 +19,6 @@ static QueueHandle_t _humidityQueue;
 static QueueHandle_t _temperatureQueue;
 static QueueHandle_t _co2Queue;
 static QueueHandle_t _soundQueue;
-static QueueHandle_t _servoQueue;
 static EventGroupHandle_t _actEventGroup;
 static EventGroupHandle_t _doneEventGroup;
 static bool _errorState = false;
@@ -29,7 +28,6 @@ void farmerama_create(QueueHandle_t senderQueue,
 					  QueueHandle_t temperatureQueue, 
 					  QueueHandle_t co2Queue, 
 					  QueueHandle_t soundQueue, 
-					  QueueHandle_t servoQueue, 
 					  EventGroupHandle_t actEventGroup, 
 					  EventGroupHandle_t doneEventGroup) {
 	_senderQueue = senderQueue;
@@ -37,7 +35,6 @@ void farmerama_create(QueueHandle_t senderQueue,
 	_temperatureQueue = temperatureQueue;
 	_co2Queue = co2Queue;
 	_soundQueue = soundQueue;
-	_servoQueue = servoQueue;
 	_actEventGroup = actEventGroup;
 	_doneEventGroup = doneEventGroup;
 	
@@ -94,13 +91,6 @@ void farmerama_runTask(void) {
 	uplinkMessageBuilder_setSoundData(sound);
 	
 	if (true == _errorState){ uplinkMessageBuilder_setSystemErrorState(); }
-	
-	if (false == _errorState){
-		xQueueSendToBack(_servoQueue, &humidity, pdMS_TO_TICKS(10000));
-		xQueueSendToBack(_servoQueue, &temperature, pdMS_TO_TICKS(10000));
-		xQueueSendToBack(_servoQueue, &ppm, pdMS_TO_TICKS(10000));
-		xQueueSendToBack(_servoQueue, &sound, pdMS_TO_TICKS(10000));
-	}
 
 	_errorState = false;
 	xTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(TASK_INTERVAL));

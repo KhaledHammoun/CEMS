@@ -311,9 +311,6 @@
     <Compile Include="HeaderFiles\SenderTask.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="HeaderFiles\ServoTask.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="HeaderFiles\SoundTask.h">
       <SubType>compile</SubType>
     </Compile>
@@ -339,9 +336,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="SourceFiles\SenderTask.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="SourceFiles\ServoTask.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="SourceFiles\SoundTask.c">

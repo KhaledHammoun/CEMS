@@ -9,7 +9,6 @@ void farmerama_create(QueueHandle_t senderQueue,
 					  QueueHandle_t temperatureQueue, 
 					  QueueHandle_t co2Queue, 
 					  QueueHandle_t soundQueue, 
-					  QueueHandle_t servoQueue, 
 					  EventGroupHandle_t actEventGroup, 
 					  EventGroupHandle_t doneEventGroup);
 void farmerama_initTask(void* params);
