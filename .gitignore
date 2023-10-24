@@ -1,4 +1,8 @@
-
 .vs/
 CEMS/Debug/
 .vs/CEMS/v14/.atsuo
+/CEMS/CEMS.X/
+/CEMS/build/
+/CEMS/.generated_files/
+/CEMS/nbproject/
+/CEMS/nbproject/private
