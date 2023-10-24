@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stddef.h>
-#include <lora_driver.h>
 #include <task.h>
 #include <Configuration.h>
 
@@ -33,15 +32,15 @@ void receiverTask_initTask(void* params) {
 }
 
 void receiverTask_runTask(void) {
-	lora_driver_payload_t payload;
-	xMessageBufferReceive(_receiverBuffer, 
-						  &payload, 
-						  sizeof(lora_driver_payload_t), 
-						  portMAX_DELAY
-	);
-
-	if (payload.len == EXPECTED_PAYLOAD_LENGTH) {
-	}
+// 	lora_driver_payload_t payload;
+// 	xMessageBufferReceive(_receiverBuffer, 
+// 						  &payload, 
+// 						  sizeof(lora_driver_payload_t), 
+// 						  portMAX_DELAY
+// 	);
+// 
+// 	if (payload.len == EXPECTED_PAYLOAD_LENGTH) {
+// 	}
 }
 
 static void _run(void* params) {
