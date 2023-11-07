@@ -94,6 +94,7 @@ void initialiseSystem()
 	//PortA all data IN
 	for (int i = 0; i < 8; i++){
 		*(bus2[i].ddr) &= ~(_BV(bus2[i].bit));
+		*bus2[i].port |= _BV(bus2[i].bit);
 	}
 	
 	//PortC all data OUT and set to zero
@@ -177,7 +178,7 @@ void receiveTask (void * pvParameters)
 			recieved = recieved | (bit << i);
 		}
 		
-		if (recieved != 0x00 && recieved != 0x02){
+		if (recieved != 0x00 && recieved != 0x02 && recieved != 0x0E && recieved != 0x8E){
 			
 			message.data = recieved;
 			vTaskDelay(pdMS_TO_TICKS(123));
@@ -250,7 +251,6 @@ void userInputTask(void * pvParameters)
 		while (stdio_inputIsWaiting())
 		{
 			i = getchar();
-			printf("%c", i);
 			message.data = i;
 			message.hammingCode = getHammingBits(i);
 			xQueueSend(sendQueue,(void*)&message, portMAX_DELAY);
