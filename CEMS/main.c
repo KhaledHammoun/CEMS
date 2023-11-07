@@ -30,6 +30,25 @@ struct Message
 	char hammingCode;
 };
 
+typedef struct bus_descr_t
+{
+	volatile uint8_t* ddr;
+	volatile uint8_t* pin;
+	volatile uint8_t* port;
+	uint8_t bit;
+} bus_descr_t;
+
+static bus_descr_t bus2[] = {
+	{&DDRD, &PIND, &PORTD, PD7},
+	{&DDRB, &PINB, &PORTB, PB7},
+	{&DDRG, &PING, &PORTG, PG5},
+	{&DDRB, &PINB, &PORTB, PB5},
+	{&DDRB, &PINB, &PORTB, PB6},
+	{&DDRB, &PINB, &PORTB, PB4},
+	{&DDRH, &PINH, &PORTH, PH6},
+	{&DDRE, &PINE, &PORTE, PE3}
+};
+
 #define QUEUE_LENGTH 10
 #define QUEUE_ITEM_SIZE sizeof(struct Message)
 
@@ -73,7 +92,9 @@ void initialiseSystem()
 	
 	//Port initialization
 	//PortA all data IN
-	DDRK = 0b00000000;
+	for (int i = 0; i < 8; i++){
+		*(bus2[i].ddr) &= ~(_BV(bus2[i].bit));
+	}
 	
 	//PortC all data OUT and set to zero
 	DDRC = 0b11111111;
@@ -150,29 +171,36 @@ void receiveTask (void * pvParameters)
 	{
 		vTaskDelay(pdMS_TO_TICKS(17));
 		
-		if ('\0' != PINK){
+		uint8_t recieved = 0x00;
+		for (int i = 0; i<8; i++){
+			uint8_t bit = (*bus2[i].pin >> bus2[i].bit) & 0b0001;
+			recieved = recieved | (bit << i);
+		}
+		
+		if (recieved != 0x00 && recieved != 0x02){
 			
-			message.data = PINK;
+			message.data = recieved;
 			vTaskDelay(pdMS_TO_TICKS(123));
-			message.hammingCode = PINK;
+			message.hammingCode = recieved;
 			
-			if (message.hammingCode == getHammingBits(message.data))
-			{
-				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
-			}
-			else{
-				message.data = '<';
-				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
-				
-				message.data = 'E';
-				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
-				
-				message.data = 'R';
-				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
-				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
-				message.data = '>';
-				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
-			}
+			xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+			//if (message.hammingCode == getHammingBits(message.data))
+			//{
+				//xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+			//}
+			//else{
+				//message.data = '<';
+				//xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+				//
+				//message.data = 'E';
+				//xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+				//
+				//message.data = 'R';
+				//xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+				//xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+				//message.data = '>';
+				//xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+			//}
 			
 			vTaskDelay(pdMS_TO_TICKS(123));
 		}
@@ -222,6 +250,7 @@ void userInputTask(void * pvParameters)
 		while (stdio_inputIsWaiting())
 		{
 			i = getchar();
+			printf("%c", i);
 			message.data = i;
 			message.hammingCode = getHammingBits(i);
 			xQueueSend(sendQueue,(void*)&message, portMAX_DELAY);
