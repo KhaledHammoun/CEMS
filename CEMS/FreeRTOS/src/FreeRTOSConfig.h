@@ -87,7 +87,7 @@
 #define configSTACK_DEPTH_TYPE              uint16_t
 
 /* IHA VIA Trace facility */
-#define configUseR2RTrace					0
+#define configUseR2RTrace					1
 
 /* Set the stack pointer type to be uint16_t, otherwise it defaults to unsigned long */
 #define portPOINTER_SIZE_TYPE               uint16_t
