@@ -169,12 +169,9 @@ void receiveTask (void * pvParameters)
 	#endif
 	
 	struct Message message;
-	TickType_t last_wake_time = xTaskGetTickCount();
 	for(;;)
 	{
-		xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(10));
-		//vTaskDelay(pdMS_TO_TICKS(17));
-		
+		vTaskDelay(pdMS_TO_TICKS(17));
 		uint8_t recieved = 0x00;
 		for (int i = 0; i<8; i++){
 			uint8_t bit = (*bus2[i].pin >> bus2[i].bit) & 0b0001;
@@ -182,11 +179,8 @@ void receiveTask (void * pvParameters)
 		}
 		
 		if (recieved != 0x00){
-			
 			message.data = recieved;
-			last_wake_time = xTaskGetTickCount();
-			xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(105));
-			//vTaskDelay(pdMS_TO_TICKS(123));
+			vTaskDelay(pdMS_TO_TICKS(223));
 			recieved = 0x00;
 			for (int i = 0; i<8; i++){
 				uint8_t bit = (*bus2[i].pin >> bus2[i].bit) & 0b0001;
@@ -212,9 +206,7 @@ void receiveTask (void * pvParameters)
 				message.data = '>';
 				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
 			}
-			last_wake_time = xTaskGetTickCount();
-			xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(105));
-			//vTaskDelay(pdMS_TO_TICKS(123));
+			vTaskDelay(pdMS_TO_TICKS(223));
 		}
 	}
 }
@@ -233,13 +225,13 @@ void sendTask(void * pvParameters)
 	{
 		if( xQueueReceive( sendQueue, &message, portMAX_DELAY )){
 			PORTC = message.data;
-			printf("%c", message.data);
-			vTaskDelay(pdMS_TO_TICKS(100));
+			//printf("%c", message.data);
+			vTaskDelay(pdMS_TO_TICKS(200));
 			PORTC = message.hammingCode;
-			printf("%c", message.hammingCode);
-			vTaskDelay(pdMS_TO_TICKS(100));
+			//printf("%c", message.hammingCode);
+			vTaskDelay(pdMS_TO_TICKS(200));
 			PORTC = 0x00;
-			vTaskDelay(pdMS_TO_TICKS(100));
+			vTaskDelay(pdMS_TO_TICKS(200));
 		}
 	}
 }
@@ -292,7 +284,7 @@ void printTask(void * pvParameters)
 			//read from the queue and print
 			if (xSemaphoreTake(printSemaphore, portMAX_DELAY))
 			{
-				//printf("%c", message.data);
+				printf("%c", message.data);
 				xSemaphoreGive(printSemaphore);
 			}
 		}
