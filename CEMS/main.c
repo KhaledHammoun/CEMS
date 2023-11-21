@@ -187,23 +187,23 @@ void receiveTask (void * pvParameters)
 			message.hammingCode = recieved;
 			
 			xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
-			//if (message.hammingCode == getHammingBits(message.data))
-			//{
-				//xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
-			//}
-			//else{
-				//message.data = '<';
-				//xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
-				//
-				//message.data = 'E';
-				//xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
-				//
-				//message.data = 'R';
-				//xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
-				//xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
-				//message.data = '>';
-				//xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
-			//}
+			if (message.hammingCode == getHammingBits(message.data))
+			{
+				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+			}
+			else{
+				message.data = '<';
+				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+				
+				message.data = 'E';
+				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+				
+				message.data = 'R';
+				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+				message.data = '>';
+				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+			}
 			
 			vTaskDelay(pdMS_TO_TICKS(123));
 		}
@@ -241,7 +241,7 @@ void userInputTask(void * pvParameters)
 	#endif
 	
 	TickType_t last_wake_time = xTaskGetTickCount();
-	const TickType_t xFrequency = 58 / 2; // supposedly around half a second
+	const TickType_t xFrequency = 58; // supposedly around half a second
 	
 	struct Message message;
 	
