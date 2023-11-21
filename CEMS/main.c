@@ -27,7 +27,7 @@ void printTask( void *pvParameters );
 typedef struct Message Message;
 struct Message
 {
-	char data;
+	uint16_t data;
 	char hammingCode;
 };
 
@@ -169,10 +169,11 @@ void receiveTask (void * pvParameters)
 	#endif
 	
 	struct Message message;
-	
+	TickType_t last_wake_time = xTaskGetTickCount();
 	for(;;)
 	{
-		vTaskDelay(pdMS_TO_TICKS(17));
+		xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(10));
+		//vTaskDelay(pdMS_TO_TICKS(17));
 		
 		uint8_t recieved = 0x00;
 		for (int i = 0; i<8; i++){
@@ -183,7 +184,9 @@ void receiveTask (void * pvParameters)
 		if (recieved != 0x00){
 			
 			message.data = recieved;
-			vTaskDelay(pdMS_TO_TICKS(123));
+			last_wake_time = xTaskGetTickCount();
+			xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(105));
+			//vTaskDelay(pdMS_TO_TICKS(123));
 			recieved = 0x00;
 			for (int i = 0; i<8; i++){
 				uint8_t bit = (*bus2[i].pin >> bus2[i].bit) & 0b0001;
@@ -209,8 +212,9 @@ void receiveTask (void * pvParameters)
 				message.data = '>';
 				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
 			}
-			
-			vTaskDelay(pdMS_TO_TICKS(123));
+			last_wake_time = xTaskGetTickCount();
+			xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(105));
+			//vTaskDelay(pdMS_TO_TICKS(123));
 		}
 	}
 }
@@ -229,8 +233,10 @@ void sendTask(void * pvParameters)
 	{
 		if( xQueueReceive( sendQueue, &message, portMAX_DELAY )){
 			PORTC = message.data;
+			printf("%c", message.data);
 			vTaskDelay(pdMS_TO_TICKS(100));
 			PORTC = message.hammingCode;
+			printf("%c", message.hammingCode);
 			vTaskDelay(pdMS_TO_TICKS(100));
 			PORTC = 0x00;
 			vTaskDelay(pdMS_TO_TICKS(100));
@@ -246,13 +252,12 @@ void userInputTask(void * pvParameters)
 	#endif
 	
 	TickType_t last_wake_time = xTaskGetTickCount();
-	const TickType_t xFrequency = 58; // supposedly around half a second
 	
 	struct Message message;
 	
 	for(;;)
 	{
-		xTaskDelayUntil(&last_wake_time, xFrequency);
+		xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(1000));
 		
 		while (1)
 		{
@@ -264,8 +269,6 @@ void userInputTask(void * pvParameters)
 					int16_t temperature = hih8120_getTemperature_x10();
 					message.data = temperature;
 					message.hammingCode = getHammingBits(temperature);
-					printf("%c", message.data);
-					printf("%c", message.hammingCode);
 					xQueueSend(sendQueue,(void*)&message, portMAX_DELAY);
 				}
 			}
