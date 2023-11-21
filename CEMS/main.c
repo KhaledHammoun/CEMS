@@ -4,6 +4,7 @@
 #include <stdint.h>
 // Drivers
 #include <display_7seg.h>
+#include <hih8120.h>
 
 #include <ATMEGA_FreeRTOS.h>
 #include <semphr.h>
@@ -89,6 +90,7 @@ void initialiseSystem()
 	// Make it possible to use stdio on COM port 0 (USB) on Arduino board - Setting 57600,8,N,1
 	stdio_initialise(ser_USART0);
 	trace_init();
+	hih8120_initialise();
 	
 	//Port initialization
 	//PortA all data IN
@@ -178,7 +180,7 @@ void receiveTask (void * pvParameters)
 			recieved = recieved | (bit << i);
 		}
 		
-		if (recieved != 0x00 && recieved != 0x02 && recieved != 0x0E && recieved != 0x8E){
+		if (recieved != 0x00){
 			
 			message.data = recieved;
 			vTaskDelay(pdMS_TO_TICKS(123));
@@ -222,11 +224,11 @@ void sendTask(void * pvParameters)
 	{
 		if( xQueueReceive( sendQueue, &message, portMAX_DELAY )){
 			PORTC = message.data;
-			vTaskDelay(pdMS_TO_TICKS(100));
+			vTaskDelay(pdMS_TO_TICKS(200));
 			PORTC = message.hammingCode;
-			vTaskDelay(pdMS_TO_TICKS(100));
+			vTaskDelay(pdMS_TO_TICKS(200));
 			PORTC = 0x00;
-			vTaskDelay(pdMS_TO_TICKS(100));
+			vTaskDelay(pdMS_TO_TICKS(200));
 		}
 	}
 }
@@ -241,19 +243,24 @@ void userInputTask(void * pvParameters)
 	TickType_t last_wake_time = xTaskGetTickCount();
 	const TickType_t xFrequency = 58 / 2; // supposedly around half a second
 	
-	char i;
 	struct Message message;
 	
 	for(;;)
 	{
 		xTaskDelayUntil(&last_wake_time, xFrequency);
 		
-		while (stdio_inputIsWaiting())
+		while (1)
 		{
-			i = getchar();
-			message.data = i;
-			message.hammingCode = getHammingBits(i);
-			xQueueSend(sendQueue,(void*)&message, portMAX_DELAY);
+			if (hih8120_wakeup() == HIH8120_OK) {
+				vTaskDelay(pdMS_TO_TICKS(100));
+				
+				if (hih8120_measure() == HIH8120_OK) {
+					vTaskDelay(pdMS_TO_TICKS(50));
+					message.data = hih8120_getTemperature_x10();
+					message.hammingCode = getHammingBits(message.data);
+					xQueueSend(sendQueue,(void*)&message, portMAX_DELAY);
+				}
+			}
 		}
 	}
 }
