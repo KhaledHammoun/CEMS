@@ -184,6 +184,11 @@ void receiveTask (void * pvParameters)
 			
 			message.data = recieved;
 			vTaskDelay(pdMS_TO_TICKS(123));
+			recieved = 0x00;
+			for (int i = 0; i<8; i++){
+				uint8_t bit = (*bus2[i].pin >> bus2[i].bit) & 0b0001;
+				recieved = recieved | (bit << i);
+			}
 			message.hammingCode = recieved;
 			
 			xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
@@ -224,11 +229,11 @@ void sendTask(void * pvParameters)
 	{
 		if( xQueueReceive( sendQueue, &message, portMAX_DELAY )){
 			PORTC = message.data;
-			vTaskDelay(pdMS_TO_TICKS(200));
+			vTaskDelay(pdMS_TO_TICKS(100));
 			PORTC = message.hammingCode;
-			vTaskDelay(pdMS_TO_TICKS(200));
+			vTaskDelay(pdMS_TO_TICKS(100));
 			PORTC = 0x00;
-			vTaskDelay(pdMS_TO_TICKS(200));
+			vTaskDelay(pdMS_TO_TICKS(100));
 		}
 	}
 }
@@ -256,8 +261,11 @@ void userInputTask(void * pvParameters)
 				
 				if (hih8120_measure() == HIH8120_OK) {
 					vTaskDelay(pdMS_TO_TICKS(50));
-					message.data = hih8120_getTemperature_x10();
-					message.hammingCode = getHammingBits(message.data);
+					int16_t temperature = hih8120_getTemperature_x10();
+					message.data = temperature;
+					message.hammingCode = getHammingBits(temperature);
+					printf("%c", message.data);
+					printf("%c", message.hammingCode);
 					xQueueSend(sendQueue,(void*)&message, portMAX_DELAY);
 				}
 			}
@@ -281,7 +289,7 @@ void printTask(void * pvParameters)
 			//read from the queue and print
 			if (xSemaphoreTake(printSemaphore, portMAX_DELAY))
 			{
-				printf("%c", message.data);
+				//printf("%c", message.data);
 				xSemaphoreGive(printSemaphore);
 			}
 		}
