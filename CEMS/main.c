@@ -232,6 +232,7 @@ void sendTask(void * pvParameters)
 			vTaskDelay(pdMS_TO_TICKS(200));
 			PORTC = 0x00;
 			vTaskDelay(pdMS_TO_TICKS(200));
+			xQueueReset(sendQueue);
 		}
 	}
 }
@@ -286,6 +287,7 @@ void printTask(void * pvParameters)
 			{
 				printf("%c", message.data);
 				xSemaphoreGive(printSemaphore);
+				xQueueReset(receiveQueue);
 			}
 		}
 	}
