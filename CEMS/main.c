@@ -180,7 +180,7 @@ void receiveTask (void * pvParameters)
 		
 		if (recieved != 0x00){
 			message.data = recieved;
-			vTaskDelay(pdMS_TO_TICKS(223));
+			vTaskDelay(pdMS_TO_TICKS(212));
 			recieved = 0x00;
 			for (int i = 0; i<8; i++){
 				uint8_t bit = (*bus2[i].pin >> bus2[i].bit) & 0b0001;
@@ -206,7 +206,7 @@ void receiveTask (void * pvParameters)
 				message.data = '>';
 				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
 			}
-			vTaskDelay(pdMS_TO_TICKS(223));
+			vTaskDelay(pdMS_TO_TICKS(212));
 		}
 	}
 }
@@ -226,12 +226,12 @@ void sendTask(void * pvParameters)
 		if( xQueueReceive( sendQueue, &message, portMAX_DELAY )){
 			PORTC = message.data;
 			//printf("%c", message.data);
-			vTaskDelay(pdMS_TO_TICKS(200));
+			vTaskDelay(pdMS_TO_TICKS(190));
 			PORTC = message.hammingCode;
 			//printf("%c", message.hammingCode);
-			vTaskDelay(pdMS_TO_TICKS(200));
+			vTaskDelay(pdMS_TO_TICKS(190));
 			PORTC = 0x00;
-			vTaskDelay(pdMS_TO_TICKS(200));
+			vTaskDelay(pdMS_TO_TICKS(190));
 			xQueueReset(sendQueue);
 		}
 	}
@@ -250,12 +250,12 @@ void userInputTask(void * pvParameters)
 	
 	for(;;)
 	{
-		xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(1000));
+		xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(950));
 		
 		while (1)
 		{
 			if (hih8120_wakeup() == HIH8120_OK) {
-				vTaskDelay(pdMS_TO_TICKS(100));
+				vTaskDelay(pdMS_TO_TICKS(95));
 				
 				if (hih8120_measure() == HIH8120_OK) {
 					vTaskDelay(pdMS_TO_TICKS(50));
