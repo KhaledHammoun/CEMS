@@ -118,7 +118,7 @@ void initialiseSystem()
 	"receive",
 	configMINIMAL_STACK_SIZE,
 	NULL,
-	4,
+	1,
 	NULL
 	);
 	
@@ -127,7 +127,7 @@ void initialiseSystem()
 	"send",
 	configMINIMAL_STACK_SIZE,
 	NULL,
-	3,
+	2,
 	NULL
 	);
 	
@@ -136,7 +136,7 @@ void initialiseSystem()
 	"read",
 	configMINIMAL_STACK_SIZE,
 	NULL,
-	1,
+	3,
 	NULL
 	);
 	
@@ -145,7 +145,7 @@ void initialiseSystem()
 	"print",
 	configMINIMAL_STACK_SIZE,
 	NULL,
-	1,
+	4,
 	NULL
 	);
 	
