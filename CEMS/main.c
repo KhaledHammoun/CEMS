@@ -52,8 +52,8 @@ static bus_descr_t bus2[] = {
 
 #define QUEUE_LENGTH 10
 #define QUEUE_ITEM_SIZE sizeof(struct Message)
-#define SENDER_DELAY 162
-#define RECEIVER_DELAY 162
+#define SENDER_DELAY 65
+#define RECEIVER_DELAY 49
 
 // sets the bit in position `pos` to 1
 char setBit(char value, char pos){
@@ -166,7 +166,7 @@ void receiveTask (void * pvParameters)
 {
 	//picoscope
 	#if (configUSE_APPLICATION_TASK_TAG == 1)
-	vTaskSetApplicationTaskTag(NULL, (void *) 8);
+	vTaskSetApplicationTaskTag(NULL, (void *) 10);
 	#endif
 	
 	TickType_t last_wake_time = xTaskGetTickCount();
@@ -256,7 +256,7 @@ void inputTask(void * pvParameters)
 {
 	//picoscope
 	#if (configUSE_APPLICATION_TASK_TAG == 1)
-	vTaskSetApplicationTaskTag(NULL, (void *) 1);
+	vTaskSetApplicationTaskTag(NULL, (void *) 6);
 	#endif
 	
 	TickType_t last_wake_time = xTaskGetTickCount();
@@ -265,7 +265,7 @@ void inputTask(void * pvParameters)
 	
 	for(;;)
 	{
-		xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(410));
+		xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
 
 		if (hih8120_wakeup() == HIH8120_OK) {
 			last_wake_time = xTaskGetTickCount();
@@ -278,7 +278,7 @@ void inputTask(void * pvParameters)
 				message.hammingCode = getHammingBits(humidity);
 				xQueueSend(sendQueue,(void*)&message, portMAX_DELAY);
 			}
-		}
+		}	
 	}
 }
 
@@ -286,7 +286,7 @@ void printTask(void * pvParameters)
 {
 	//picoscope
 	#if (configUSE_APPLICATION_TASK_TAG == 1)
-	vTaskSetApplicationTaskTag(NULL, (void *) 1);
+	vTaskSetApplicationTaskTag(NULL, (void *) 4);
 	#endif
 	
 	struct Message message;
