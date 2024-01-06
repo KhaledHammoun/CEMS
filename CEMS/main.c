@@ -52,6 +52,8 @@ static bus_descr_t bus2[] = {
 
 #define QUEUE_LENGTH 10
 #define QUEUE_ITEM_SIZE sizeof(struct Message)
+#define SENDER_DELAY 162
+#define RECEIVER_DELAY 162
 
 // sets the bit in position `pos` to 1
 char setBit(char value, char pos){
@@ -93,7 +95,6 @@ void initialiseSystem()
 	hih8120_initialise();
 	
 	//Port initialization
-	//PortA all data IN
 	for (int i = 0; i < 8; i++){
 		*(bus2[i].ddr) &= ~(_BV(bus2[i].bit));
 		*bus2[i].port |= _BV(bus2[i].bit);
@@ -165,13 +166,15 @@ void receiveTask (void * pvParameters)
 {
 	//picoscope
 	#if (configUSE_APPLICATION_TASK_TAG == 1)
-	vTaskSetApplicationTaskTag(NULL, (void *) 2);
+	vTaskSetApplicationTaskTag(NULL, (void *) 8);
 	#endif
+	
+	TickType_t last_wake_time = xTaskGetTickCount();
 	
 	struct Message message;
 	for(;;)
 	{
-		vTaskDelay(pdMS_TO_TICKS(17));
+		xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(17));
 		uint8_t recieved = 0x00;
 		for (int i = 0; i<8; i++){
 			uint8_t bit = (*bus2[i].pin >> bus2[i].bit) & 0b0001;
@@ -179,16 +182,22 @@ void receiveTask (void * pvParameters)
 		}
 		
 		if (recieved != 0x00){
+			//printf("%c", recieved);
+			xSemaphoreTake(printSemaphore, portMAX_DELAY)
 			message.data = recieved;
-			vTaskDelay(pdMS_TO_TICKS(223));
+			last_wake_time = xTaskGetTickCount();
+			xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(RECEIVER_DELAY));
 			recieved = 0x00;
 			for (int i = 0; i<8; i++){
 				uint8_t bit = (*bus2[i].pin >> bus2[i].bit) & 0b0001;
 				recieved = recieved | (bit << i);
 			}
+			//printf("%c", recieved);
 			message.hammingCode = recieved;
+			xSemaphoreGive(printSemaphore);
 			
 			xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
+			//printf(getHammingBits(message.data));
 			if (message.hammingCode == getHammingBits(message.data))
 			{
 				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
@@ -206,7 +215,8 @@ void receiveTask (void * pvParameters)
 				message.data = '>';
 				xQueueSend(receiveQueue,(void*)&message, portMAX_DELAY);
 			}
-			vTaskDelay(pdMS_TO_TICKS(223));
+			last_wake_time = xTaskGetTickCount();
+			xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(RECEIVER_DELAY));
 		}
 	}
 }
@@ -216,22 +226,26 @@ void sendTask(void * pvParameters)
 {
 	//picoscope
 	#if (configUSE_APPLICATION_TASK_TAG == 1)
-	vTaskSetApplicationTaskTag(NULL, (void *) 4);
+	vTaskSetApplicationTaskTag(NULL, (void *) 1);
 	#endif
 	
 	struct Message message;
+	
+	TickType_t last_wake_time = xTaskGetTickCount();
 	
 	for(;;)
 	{
 		if( xQueueReceive( sendQueue, &message, portMAX_DELAY )){
 			PORTC = message.data;
 			//printf("%c", message.data);
-			vTaskDelay(pdMS_TO_TICKS(200));
-			PORTC = message.hammingCode;
+			xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(SENDER_DELAY));
+			PORTC = message.hammingCode; //tested adding initially wrong value to the hamming code and the receiver task started failing on 162 for sender and 162 for receiver(delays)
 			//printf("%c", message.hammingCode);
-			vTaskDelay(pdMS_TO_TICKS(200));
+			last_wake_time = xTaskGetTickCount();
+			xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(SENDER_DELAY));
 			PORTC = 0x00;
-			vTaskDelay(pdMS_TO_TICKS(200));
+			last_wake_time = xTaskGetTickCount();
+			xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(SENDER_DELAY));
 			xQueueReset(sendQueue);
 		}
 	}
@@ -241,7 +255,7 @@ void userInputTask(void * pvParameters)
 {
 	//picoscope
 	#if (configUSE_APPLICATION_TASK_TAG == 1)
-	vTaskSetApplicationTaskTag(NULL, (void *) 6);
+	vTaskSetApplicationTaskTag(NULL, (void *) 1);
 	#endif
 	
 	TickType_t last_wake_time = xTaskGetTickCount();
@@ -250,18 +264,20 @@ void userInputTask(void * pvParameters)
 	
 	for(;;)
 	{
-		xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(1000));
+		xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(500));
 		
 		while (1)
 		{
 			if (hih8120_wakeup() == HIH8120_OK) {
-				vTaskDelay(pdMS_TO_TICKS(100));
+				last_wake_time = xTaskGetTickCount();
+				xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(100));
 				
 				if (hih8120_measure() == HIH8120_OK) {
-					vTaskDelay(pdMS_TO_TICKS(50));
-					int16_t temperature = hih8120_getTemperature_x10();
-					message.data = temperature;
-					message.hammingCode = getHammingBits(temperature);
+					last_wake_time = xTaskGetTickCount();
+					xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(50));
+					int16_t humidity = hih8120_getHumidity();
+					message.data = humidity;
+					message.hammingCode = getHammingBits(humidity);
 					xQueueSend(sendQueue,(void*)&message, portMAX_DELAY);
 				}
 			}
@@ -273,7 +289,7 @@ void printTask(void * pvParameters)
 {
 	//picoscope
 	#if (configUSE_APPLICATION_TASK_TAG == 1)
-	vTaskSetApplicationTaskTag(NULL, (void *) 8);
+	vTaskSetApplicationTaskTag(NULL, (void *) 1);
 	#endif
 	
 	struct Message message;
