@@ -49,6 +49,7 @@
     #define configUSE_IDLE_HOOK             1
 #endif
 
+#define RECEIVER_PERIOD						150
 #define configUSE_TICK_HOOK                 0
 #define configCPU_CLOCK_HZ                  ( ( uint32_t ) F_CPU )          // This F_CPU variable set by the environment
 #define configMAX_PRIORITIES                10
