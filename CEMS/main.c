@@ -3,19 +3,17 @@
 #include <avr/sfr_defs.h>
 #include <stdint.h>
 // Drivers
-#include <display_7seg.h>
 #include <hih8120.h>
 
 #include <ATMEGA_FreeRTOS.h>
-#include <semphr.h>
 
 #include <FreeRTOSTraceDriver.h>
 #include <stdio_driver.h>
 #include <serial.h>
 #include <timers.h>
 #include <task.h>
+#include <queue.h>
 
-SemaphoreHandle_t printSemaphore;
 QueueHandle_t sendQueue;
 QueueHandle_t receiveQueue;
 
@@ -87,15 +85,6 @@ void initialiseSystem()
 	//PortC all data OUT and set to zero
 	DDRC = 0b11111111;
 	PORTC = 0b00000000;
-	
-	if (NULL == printSemaphore)  // Check to confirm that the Semaphore has not already been created.
-	{
-		printSemaphore = xSemaphoreCreateMutex();  // Create a mutex semaphore.
-		if (NULL != printSemaphore)
-		{
-			xSemaphoreGive( ( printSemaphore ) );  // Make the mutex available for use, by initially "Giving" the Semaphore.
-		}
-	}
 	
 	//Task initialization
 	xTaskCreate(
