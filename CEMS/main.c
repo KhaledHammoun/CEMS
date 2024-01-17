@@ -103,7 +103,7 @@ void initialiseSystem()
 	"receive",
 	configMINIMAL_STACK_SIZE,
 	NULL,
-	1,
+	4,
 	NULL
 	);
 	
@@ -130,7 +130,7 @@ void initialiseSystem()
 	"print",
 	configMINIMAL_STACK_SIZE,
 	NULL,
-	4,
+	1,
 	NULL
 	);
 	
@@ -211,16 +211,15 @@ void sendTask(void * pvParameters)
 	
 	for(;;)
 	{
-		if( xQueueReceive( sendQueue, &message, pdMS_TO_TICKS(500) )){
+		if( xQueueReceive( sendQueue, &message, portMAX_DELAY )){
 			PORTC = message.data;
-			
 			vTaskDelay(pdMS_TO_TICKS(SENDER_DELAY));
-			PORTC = message.hammingCode; //tested adding initially wrong value to the hamming code and the receiver task started failing on 162 for sender and 162 for receiver(delays)
 			
+			PORTC = message.hammingCode; 
 			vTaskDelay(pdMS_TO_TICKS(SENDER_DELAY));
+			
 			PORTC = 0x00;
 			vTaskDelay(pdMS_TO_TICKS(SENDER_DELAY));
-			xQueueReset(sendQueue);
 		}
 	}
 }
@@ -266,9 +265,8 @@ void printTask(void * pvParameters)
 	for(;;)
 	{
 		// Blocks when nothing in queue
-		if( xQueueReceive( receiveQueue, &message, pdMS_TO_TICKS(50) )){
+		if( xQueueReceive( receiveQueue, &message, portMAX_DELAY )){
 			printf("%c", message.data);
-			xQueueReset(receiveQueue);
 		}
 	}
 }
